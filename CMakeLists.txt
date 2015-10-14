@@ -31,7 +31,7 @@ set(pghp_SRCS
     src/Trackball.cpp
     src/Octree.cpp
     src/main.cpp
-    src/volonoi.cpp
+    src/bpa.cpp
     glfw/deps/glad.c
 )
 
