@@ -16,7 +16,7 @@ public:
     void setTransformationMatrix(const Eigen::Affine3f& transfo) { mTransformation = transfo; }
 
 protected:
-	virtual void specifyVertexData(Shader *shader) = 0;
+    virtual void specifyVertexData(Shader *shader) = 0;
 
     bool mReady;
 

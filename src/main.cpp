@@ -5,6 +5,7 @@
 #include "OpenGL.h"
 #include <GLFW/glfw3.h>
 
+
 #include "common.h"
 #include <Eigen/Geometry>
 using namespace Eigen;
@@ -15,6 +16,9 @@ using namespace Eigen;
 #include "Pointcloud.h"
 #include "Octree.h"
 #include "WireCube.h"
+#include "bpa.h"
+#include "Sphere.h"
+#include "bpa.h"
 
 // initial window size
 int WIDTH = 640;
@@ -39,6 +43,10 @@ PointCloud* pc;
 //Octree Debug
 Octree* octree;
 WireCube* wirecube;
+Sphere *sphere;
+BPA *bpa;
+
+bool drawSphere = false;
 int octreeVisu = 0;
 
 /** This method needs to be called once the GL context has been created by GLFW.
@@ -62,9 +70,10 @@ void initGL()
     pc->init(&mBlinn);
 
     //Octree
-    octree = new Octree(pc,15,10);
+    octree = new Octree(pc,30,1);
     wirecube = new WireCube();
     wirecube->init(&mSimple);
+
 
     mCamera.setSceneCenter(Vector3f(0.0,0.0,0.0));
     mCamera.setSceneDistance(4);
@@ -113,7 +122,15 @@ void render(GLFWwindow* window)
             wirecube->draw(&mSimple);
         }
     }
-
+    if(drawSphere){
+        mSimple.activate();
+        glUniformMatrix4fv(mSimple.getUniformLocation("projection_matrix"),1,false,mCamera.computeProjectionMatrix().data());
+        glUniformMatrix4fv(mSimple.getUniformLocation("modelview_matrix"),1,false,mCamera.computeViewMatrix().data());
+        Affine3f object_matrix;
+        object_matrix = Translation3f(bpa->getCenter());
+        glUniformMatrix4fv(mSimple.getUniformLocation("object_matrix"),1,false, object_matrix.data());        
+        sphere->draw(&mSimple);
+    }
     // check OpenGL errors
     GL_TEST_ERR;
 
@@ -190,6 +207,13 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
             pc = new PointCloud(octree->getPositions(), octree->getNormals());
             pc->init(&mBlinn);
+        }
+        else if(key == GLFW_KEY_P)
+        {
+            bpa = new BPA(pc,octree);
+            sphere = new Sphere(bpa->getRadius());
+            sphere->init(&mSimple);
+            drawSphere = true;
         }
         else if(key == GLFW_KEY_F)
         {

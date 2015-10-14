@@ -32,6 +32,7 @@ set(pghp_SRCS
     src/Octree.cpp
     src/main.cpp
     src/bpa.cpp
+src/Sphere.cpp
     glfw/deps/glad.c
 )
 
