@@ -5,10 +5,10 @@
 #include "Octree.h"
 #include "Eigen/Geometry"
 
-class BPA
+class BPA : public Shape
 {
 private:
-    struct BPASphere{
+    struct BPASphere {
         BPASphere(double rad, Eigen::Vector3f c){
             radius = rad;
             center = c;
@@ -18,10 +18,19 @@ private:
     };
     BPASphere *actualSphere;
 public:
+    void init(Shader *shader);
+    void draw(Shader *shader, bool drawEdges = false);
 
     BPA(PointCloud *model, Octree *octree);
     double getRadius();
     Eigen::Vector3f getCenter();
+
+    void specifyVertexData(Shader *shader);
+    GLuint mVao;
+    GLuint mBufs[2];
+
+    std::vector<int>        mIndices;   /** vertex indices */
+    std::vector<Eigen::Vector3f>	mVertices;  /** 3D positions */
 };
 
 #endif // BPA_H

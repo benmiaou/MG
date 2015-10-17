@@ -128,8 +128,9 @@ void render(GLFWwindow* window)
         glUniformMatrix4fv(mSimple.getUniformLocation("modelview_matrix"),1,false,mCamera.computeViewMatrix().data());
         Affine3f object_matrix;
         object_matrix = Translation3f(bpa->getCenter());
-        glUniformMatrix4fv(mSimple.getUniformLocation("object_matrix"),1,false, object_matrix.data());        
-        sphere->draw(&mSimple);
+        //glUniformMatrix4fv(mSimple.getUniformLocation("object_matrix"),1,false, object_matrix.data());
+        //sphere->draw(&mSimple);
+        bpa->draw(&mSimple);
     }
     // check OpenGL errors
     GL_TEST_ERR;
@@ -211,6 +212,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         else if(key == GLFW_KEY_P)
         {
             bpa = new BPA(pc,octree);
+            bpa->init(&mSimple);
             sphere = new Sphere(bpa->getRadius());
             sphere->init(&mSimple);
             drawSphere = true;
