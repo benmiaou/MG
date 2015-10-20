@@ -113,6 +113,26 @@ void Octree::decimateOneDepth()
 
 }
 
+void Octree::getNeighbour(Vector3f p,int &idx0,int &idx1){
+    Node* actualNode = mNodes[0];
+    while(!actualNode->isLeaf && ((actualNode->idx1 - actualNode->idx0) > 10)){
+        for(int i =0; i <8 ; i++)
+            if( actualNode->childs[i] != -1){
+                Node* child = mNodes[actualNode->childs[i]];
+                if(child->mAABB.contains(p)){
+                    if(child->isLeaf){
+                        idx0 = actualNode->idx0;
+                        idx1 = actualNode->idx1;
+                    }
+                    actualNode = child;
+                    i = 8;
+                }
+            }
+    }
+
+}
+
+
 void Octree::build()
 {
     Node* root = new Node(computeAABB(mPositions));

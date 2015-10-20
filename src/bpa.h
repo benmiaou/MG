@@ -17,6 +17,10 @@ private:
         Eigen::Vector3f center;
     };
     BPASphere *actualSphere;
+    int findNext(Eigen::Vector3f p1, Eigen::Vector3f p2, BPASphere *actualSphere, Octree *octree);
+    void moveSphere(double theta, Eigen::Vector3f axis);
+    void findNewTriangle(double theta, Eigen::Vector3f axis);
+    Eigen::Vector3f findPoint(std::vector<Eigen::Vector3f> tab);
 public:
     void init(Shader *shader);
     void draw(Shader *shader, bool drawEdges = false);
@@ -24,6 +28,7 @@ public:
     BPA(PointCloud *model, Octree *octree);
     double getRadius();
     Eigen::Vector3f getCenter();
+
 
     void specifyVertexData(Shader *shader);
     GLuint mVao;

@@ -59,7 +59,7 @@ void initGL()
 
     glEnable(GL_DEPTH_TEST);
 
-    // load the default shaders 
+    // load the default shaders
     mBlinn.loadFromFiles(PGHP_DIR"/shaders/blinn.vert", PGHP_DIR"/shaders/blinn.frag");
     mSimple.loadFromFiles(PGHP_DIR"/shaders/simple.vert", PGHP_DIR"/shaders/simple.frag");
 
@@ -70,7 +70,7 @@ void initGL()
     pc->init(&mBlinn);
 
     //Octree
-    octree = new Octree(pc,30,1);
+    octree = new Octree(pc,15,100);
     wirecube = new WireCube();
     wirecube->init(&mSimple);
 
@@ -103,7 +103,12 @@ void render(GLFWwindow* window)
     Matrix3f normal_matrix = (mCamera.computeViewMatrix()*pc->getTransformationMatrix()).linear().inverse().transpose();
     glUniformMatrix3fv(mBlinn.getUniformLocation("normal_matrix"),1,false,normal_matrix.data());
 
-    pc->draw(&mBlinn);
+
+    if(drawSphere)
+        bpa->draw(&mBlinn);
+    else
+        pc->draw(&mBlinn);
+
 
 
 
@@ -126,11 +131,12 @@ void render(GLFWwindow* window)
         mSimple.activate();
         glUniformMatrix4fv(mSimple.getUniformLocation("projection_matrix"),1,false,mCamera.computeProjectionMatrix().data());
         glUniformMatrix4fv(mSimple.getUniformLocation("modelview_matrix"),1,false,mCamera.computeViewMatrix().data());
+
         Affine3f object_matrix;
         object_matrix = Translation3f(bpa->getCenter());
-        //glUniformMatrix4fv(mSimple.getUniformLocation("object_matrix"),1,false, object_matrix.data());
-        //sphere->draw(&mSimple);
-        bpa->draw(&mSimple);
+        glUniformMatrix4fv(mSimple.getUniformLocation("object_matrix"),1,false, object_matrix.data());
+        sphere->draw(&mSimple);
+
     }
     // check OpenGL errors
     GL_TEST_ERR;
@@ -150,7 +156,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
         {
             mCamera.startTranslation(mLastMousePos);
         }
-        mButton = button;       
+        mButton = button;
     }else if(action == GLFW_RELEASE) {
         if(mButton == GLFW_MOUSE_BUTTON_LEFT)
         {
@@ -173,11 +179,11 @@ static void scroll_callback(GLFWwindow* window, double x, double y)
 /** This method is automatically called by GLFW everytime the mouse moves */
 static void cursorPos_callback(GLFWwindow* window, double x, double y)
 {
-    if(mButton == GLFW_MOUSE_BUTTON_LEFT) 
+    if(mButton == GLFW_MOUSE_BUTTON_LEFT)
     {
         mCamera.dragRotate(Vector2f(x,y));
     }
-    else if(mButton == GLFW_MOUSE_BUTTON_MIDDLE) 
+    else if(mButton == GLFW_MOUSE_BUTTON_MIDDLE)
     {
         mCamera.dragTranslate(Vector2f(x,y));
     }
@@ -212,7 +218,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
         else if(key == GLFW_KEY_P)
         {
             bpa = new BPA(pc,octree);
-            bpa->init(&mSimple);
+            bpa->init(&mBlinn);
             sphere = new Sphere(bpa->getRadius());
             sphere->init(&mSimple);
             drawSphere = true;
@@ -291,7 +297,7 @@ GLFWwindow* initGLFW()
 
 int main(int argc, char *argv[])
 {
-	GLFWwindow* window = initGLFW();
+    GLFWwindow* window = initGLFW();
 
     initGL();
 
