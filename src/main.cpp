@@ -28,7 +28,7 @@ int HEIGHT = 480;
 Shader mBlinn, mSimple;
 
 // geometrical represnetation of a pointlight
-Vector3f mLightPos(1,1,1);
+Vector3f mLightPos(10,10,10);
 
 // Camera parameters
 Trackball mCamera;
@@ -45,6 +45,7 @@ Octree* octree;
 WireCube* wirecube;
 Sphere *sphere;
 BPA *bpa;
+Mesh *mesh;
 
 bool drawSphere = false;
 int octreeVisu = 0;
@@ -63,11 +64,15 @@ void initGL()
     mBlinn.loadFromFiles(PGHP_DIR"/shaders/blinn.vert", PGHP_DIR"/shaders/blinn.frag");
     mSimple.loadFromFiles(PGHP_DIR"/shaders/simple.vert", PGHP_DIR"/shaders/simple.frag");
 
-    //PointCloud
+    //ointCloud
     pc = new PointCloud();
     pc->load(PGHP_DIR"/data/decimate.asc");
     pc->makeUnitary();
     pc->init(&mBlinn);
+
+    mesh = new Mesh();
+    mesh->load(PGHP_DIR"/data/PhantomUgly.obj");
+    mesh->init(&mBlinn);
 
     //Octree
     octree = new Octree(pc,15,100);
@@ -99,18 +104,15 @@ void render(GLFWwindow* window)
     light_pos << mLightPos , 1.0f;
     glUniform4fv(mBlinn.getUniformLocation("light_pos"),1,light_pos.data());
 
-    glUniformMatrix4fv(mBlinn.getUniformLocation("object_matrix"),1,false,pc->getTransformationMatrix().data());
-    Matrix3f normal_matrix = (mCamera.computeViewMatrix()*pc->getTransformationMatrix()).linear().inverse().transpose();
+    glUniformMatrix4fv(mBlinn.getUniformLocation("object_matrix"),1,false,mesh->getTransformationMatrix().data());
+    Matrix3f normal_matrix = (mCamera.computeViewMatrix()*mesh->getTransformationMatrix()).linear().inverse().transpose();
     glUniformMatrix3fv(mBlinn.getUniformLocation("normal_matrix"),1,false,normal_matrix.data());
+     mesh->draw(&mBlinn,false);
 
-
-    if(drawSphere)
+    /*if(drawSphere)
         bpa->draw(&mBlinn);
     else
-        pc->draw(&mBlinn);
-
-
-
+        pc->draw(&mBlinn);*/
 
     //Draw Octree
     if(octreeVisu >= 0)

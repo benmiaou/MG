@@ -26,5 +26,6 @@ vec3 phong(vec3 n, vec3 l, vec3 v, vec3 diffuse_color, vec3 specular_color,
 void main()
 {
 	vec3 l = vec3(modelview_matrix * light_pos) - vertexV;
-	out_color = vec4(phong(normalize(normalV),normalize(l),-normalize(vertexV),colorV.rgb,vec3(1.0),50,vec3(1./max(1,dot(l,l)))),1);
+	/*out_color = vec4(phong(normalize(normalV),normalize(l),-normalize(vertexV),colorV.rgb,vec3(1.0),50,vec3(1./max(1,dot(l,l)))),1);*/
+	out_color = vec4(normalize(normalV),1);
 }

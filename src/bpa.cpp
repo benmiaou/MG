@@ -108,7 +108,18 @@ BPA::BPA(PointCloud *model, Octree *octree)
     mIndices.push_back(0);
     mIndices.push_back(1);
     mIndices.push_back(2);
-    while(mIndices.size() < 2000){
+
+    //sauvegarde du 1er triangle et push de ses aretes
+        this->actualTriangle = new BPATriangle(p1, p2, p3);
+        Vector3f edge12(p1[0]-p2[0], p1[1]-p2[1], p1[2]-p2[2]);
+        Vector3f edge13(p1[0]-p3[0], p1[1]-p3[1], p1[2]-p3[2]);
+        Vector3f edge23(p2[0]-p3[0], p2[1]-p3[1], p2[2]-p3[2]);
+        edges.push_back(edge12);
+        edges.push_back(edge13);
+        edges.push_back(edge23);
+
+
+    /*while(mIndices.size() < 2000){
         std::cout <<"T1"<<std::endl;
         Vector3f tmp;
         p3 = positions[findNext(p1,p2,actualSphere,octree)];
@@ -123,7 +134,7 @@ BPA::BPA(PointCloud *model, Octree *octree)
         actualSphere->center = center;
         p1 = p2;
         p2 = p3;
-         std::cout <<"P1 = "<< p1 << "\nP2 "<<p2 << "\nP3 "<< p3 <<std::endl;
+         std::cout <<"P1 = "<< p1 << "\nP2 "<<p2 << "\nP3 "<< p3 <<std::endl;*/
 
 
     }

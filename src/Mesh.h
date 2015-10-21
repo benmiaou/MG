@@ -1,11 +1,11 @@
 #ifndef MESH_H
 #define MESH_H
 
-#include "Pointcloud.h"
+#include "Shape.h"
 
 #include <surface_mesh/surface_mesh.h>
 
-class Mesh : public PointCloud
+class Mesh : public Shape
 {
 public:
     Mesh() {}
@@ -15,8 +15,16 @@ public:
     void draw(Shader *shader, bool drawEdges = false);
 
 private:
+    void find();
+    GLuint mVao;
+    GLuint mBufs[3];
 
+    std::vector<Eigen::Vector3f> mPositions;
+    std::vector<Eigen::Vector3f> mNormals;
+
+    void specifyVertexData(Shader *shader);
     std::vector<Eigen::Vector3i> mIndices;
+    std::vector<unsigned int> mValence;
 
     surface_mesh::Surface_mesh mHalfEdge;
 

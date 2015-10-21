@@ -16,6 +16,19 @@ private:
         double radius;
         Eigen::Vector3f center;
     };
+    struct BPATriangle{
+      BPATriangle(Eigen::Vector3f v1, Eigen::Vector3f v2, Eigen::Vector3f v3){
+    vertex1 = v1;
+    vertex2 = v2;
+    vertex3 = v3;
+      }
+      Eigen::Vector3f vertex1;
+      Eigen::Vector3f vertex2;
+      Eigen::Vector3f vertex3;
+    };
+    BPATriangle *actualTriangle;
+    std::vector<Eigen::Vector3f> edges;
+
     BPASphere *actualSphere;
     int findNext(Eigen::Vector3f p1, Eigen::Vector3f p2, BPASphere *actualSphere, Octree *octree);
     void moveSphere(double theta, Eigen::Vector3f axis);
