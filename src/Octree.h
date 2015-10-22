@@ -27,7 +27,7 @@ public:
     void build();
     std::vector<Eigen::AlignedBox3f> getAABBs(int maxDepth = 8);
 
-    void getNeighbour(Eigen::Vector3f p, int &idx0, int &idx1);
+    int getNeighbour(Eigen::Vector3f p, int r, int &idx0, int &idx1);
     void decimate(int maxNumOfPoints);
     void decimateOneDepth();
     const std::vector<Eigen::Vector3f>& getPositions(){return mPositions;}

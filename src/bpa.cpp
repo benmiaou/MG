@@ -57,7 +57,7 @@ BPA::BPA(PointCloud *model, Octree *octree)
 
     p1 = positions[10];
     n1 = normals[10];
-    octree->getNeighbour(p1, idx0,idx1);
+    octree->getNeighbour(p1,0,idx0,idx1);
     std::cout <<"\n0: "<< idx0 << "\n1 " <<idx1 <<std::endl;
 
 
@@ -110,67 +110,66 @@ BPA::BPA(PointCloud *model, Octree *octree)
     mIndices.push_back(2);
 
     //sauvegarde du 1er triangle et push de ses aretes
-        this->actualTriangle = new BPATriangle(p1, p2, p3);
-        Vector3f edge12(p1[0]-p2[0], p1[1]-p2[1], p1[2]-p2[2]);
-        Vector3f edge13(p1[0]-p3[0], p1[1]-p3[1], p1[2]-p3[2]);
-        Vector3f edge23(p2[0]-p3[0], p2[1]-p3[1], p2[2]-p3[2]);
-        edges.push_back(edge12);
-        edges.push_back(edge13);
-        edges.push_back(edge23);
+    this->actualTriangle = new BPATriangle(p1, p2, p3);
+    Edge edge12(p1,p2,actualSphere->center);
+    Edge edge13(p1,p3,actualSphere->center);
+    Edge edge23(p2,p3,actualSphere->center);
+    edges.push_back(edge12);
+    edges.push_back(edge13);
+    edges.push_back(edge23);
 
+    int indices = 3;
+    int cpt = 0;
 
-    /*while(mIndices.size() < 2000){
-        std::cout <<"T1"<<std::endl;
-        Vector3f tmp;
-        p3 = positions[findNext(p1,p2,actualSphere,octree)];
-        std::cout <<"T2"<<std::endl;
-        mVertices.push_back(p3);
-        std::cout <<"T3"<<std::endl;
-        mIndices.push_back(mVertices.size()-4);
-        mIndices.push_back(mVertices.size()-3);
-        mIndices.push_back(mVertices.size()-1);
-        acN = (n1+n2+n3)/3;
-        center = getSphereCenter(p1,p2,p3,r,acN);
-        actualSphere->center = center;
-        p1 = p2;
-        p2 = p3;
-         std::cout <<"P1 = "<< p1 << "\nP2 "<<p2 << "\nP3 "<< p3 <<std::endl;*/
-
-
-    }
-}
-
-int BPA::findNext(Vector3f p1, Vector3f p2, BPASphere *actualSphere, Octree *octree){
-    int id = 0;
-    vector<Vector3f> positions =  octree->getPositions();
-    vector<Vector3f> normals =  octree->getNormals();
-    Vector3f m = (p1+p2)/2;
-
-
-    Vector3f center = actualSphere->center;
-    int r = actualSphere->radius;
-    float rp = distance(m,center) + r;
-    int idx0, idx1;
-    octree->getNeighbour(m, idx0,idx1);
-    std::cout <<"\n0: "<< idx0 << "\n1 " <<idx1 <<std::endl;
-    Vector3f p3 = positions[idx0];
-    id = idx0;
-    for(int i =idx0+1; i < idx1; i++){
-        Vector3f actualP = positions[i] ;
-        if(distance(center, actualP) > r){
-                //&& distance(m, actualP) < rp){
-               // && distance(p1, actualP ) >0
-               // && distance(p2, actualP ) >0){
-               // && distance(p3, m ) >  distance(m, actualP)){
-            p3 = positions[i];
-            id = i;
-             std::cout <<"TTIF"<<std::endl;
+    while(!edges.empty() && cpt < 4000){
+        Edge edge = edges.back();
+        edges.pop_back();
+        actualSphere->center = edge.sphereCenter;
+        Vector3f oldCenter = actualSphere->center;
+        int id = -1;
+        for(int i = 0; i < 4 && id ==-1 ; i++){
+            moveSphere(0.25*M_PI,(edge.p1-edge.p2));
+            // std::cerr<<"Old center : "<< oldCenter<< " New center : "<< actualSphere->center << std::endl;
+            octree->getNeighbour(actualSphere->center,0,idx0,idx1);
+            for(int i =idx0; i < idx1; i++){
+                Vector3f actualP = positions[i];
+                if(distance(oldCenter, actualP) > r)//pas dans l'ancienne sphere
+                    if(distance(actualSphere->center, actualP) < r)//dans la nouvelle sphere
+                        if(distance(edge.p1, actualP) > 0 && distance(edge.p2, actualP))//n'est pas un point de l'arete actuelle
+                            if(id == -1 || distance(actualSphere->center, actualP) < distance(actualSphere->center,positions[id]))
+                                id = i;
+            }
         }
 
+        if(id != -1){
+            p1 = edge.p1;
+            p2 = edge.p2;
+            p3 = positions[id];
+            std::cout <<"indices : "<< indices <<std::endl;
+            Vector3f acN = (n1+n2+n3)/3;
+            std::cout <<"P1 = "<< p1 << "\nP2 "<<p2 << "\nP3 "<< p3 <<std::endl;
+            actualSphere->center = getSphereCenter(p1,p2,p3,r,acN);
+
+            Edge edge13(p1,p3,actualSphere->center);
+            Edge edge23(p2,p3,actualSphere->center);
+            edges.push_back(edge13);
+            edges.push_back(edge23);
+            mVertices.push_back(p1);
+            mVertices.push_back(p2);
+            mVertices.push_back(p3);
+
+            mIndices.push_back(indices);
+            indices++;
+            mIndices.push_back(indices);
+            indices++;
+            mIndices.push_back(indices);
+            indices++;
+        }
+        cpt++;
     }
-    std::cout <<"TT1"<<std::endl;
-    return id;
 }
+
+
 
 void BPA::init(Shader *shader)
 {
@@ -222,29 +221,31 @@ void  BPA::draw(Shader *shader, bool drawEdges)
 }
 
 void BPA::moveSphere(double theta, Vector3f axis){
-  Matrix3f mat;
-  mat << 1, 0, 0,
-         0, 1, 0,
-         0, 0, 1 ;
-  mat = Matrix3f(AngleAxisf(theta, axis));
-  actualSphere->center = mat * this->getCenter();  
+    Matrix3f mat;
+    mat << 1, 0, 0,
+            0, 1, 0,
+            0, 0, 1 ;
+    mat = Matrix3f(AngleAxisf(theta, axis));
+    Affine3f object_matrix;
+    object_matrix = Translation3f(actualSphere->center) * mat * (Translation3f(-1*actualSphere->center));
+    actualSphere->center = object_matrix * actualSphere->center;
 }
 
 Vector3f BPA::findPoint(vector<Vector3f> tab){
-  Vector3f center = this->getCenter();
-  double rad =  this->getRadius();
-  for (int i=0; i<tab.size(); i++){
-    double x = (tab[i][0] - center[0])*(tab[i][0] - center[0]);
-    double y = (tab[i][1] - center[1])*(tab[i][1] - center[1]);
-    double z = (tab[i][2] - center[2])*(tab[i][2] - center[2]);
-    if (x+y+z==rad*rad)
-      return Vector3f(tab[i][0], tab[i][1], tab[i][2]);
-  }
-  return Vector3f(-1, -1, -1);
+    Vector3f center = this->getCenter();
+    double rad =  this->getRadius();
+    for (int i=0; i<tab.size(); i++){
+        double x = (tab[i][0] - center[0])*(tab[i][0] - center[0]);
+        double y = (tab[i][1] - center[1])*(tab[i][1] - center[1]);
+        double z = (tab[i][2] - center[2])*(tab[i][2] - center[2]);
+        if (x+y+z==rad*rad)
+            return Vector3f(tab[i][0], tab[i][1], tab[i][2]);
+    }
+    return Vector3f(-1, -1, -1);
 }
 
 void BPA::findNewTriangle(double theta, Vector3f axis){
-  //while (){
+    //while (){
     moveSphere(theta, axis);
     Vector3f point = findPoint(this->mVertices); //3eme point du nouveau triangle
     

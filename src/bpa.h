@@ -26,8 +26,18 @@ private:
       Eigen::Vector3f vertex2;
       Eigen::Vector3f vertex3;
     };
+    struct Edge{
+      Edge(Eigen::Vector3f point1, Eigen::Vector3f point2, Eigen::Vector3f center){
+          p1 = point1;
+          p2 = point2;
+          sphereCenter = center;
+      }
+      Eigen::Vector3f p1;
+      Eigen::Vector3f p2;
+      Eigen::Vector3f sphereCenter;
+    };
+    std::vector<Edge> edges;
     BPATriangle *actualTriangle;
-    std::vector<Eigen::Vector3f> edges;
 
     BPASphere *actualSphere;
     int findNext(Eigen::Vector3f p1, Eigen::Vector3f p2, BPASphere *actualSphere, Octree *octree);

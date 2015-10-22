@@ -28,7 +28,7 @@ int HEIGHT = 480;
 Shader mBlinn, mSimple;
 
 // geometrical represnetation of a pointlight
-Vector3f mLightPos(10,10,10);
+Vector3f mLightPos(1,1,1);
 
 // Camera parameters
 Trackball mCamera;
@@ -107,12 +107,14 @@ void render(GLFWwindow* window)
     glUniformMatrix4fv(mBlinn.getUniformLocation("object_matrix"),1,false,mesh->getTransformationMatrix().data());
     Matrix3f normal_matrix = (mCamera.computeViewMatrix()*mesh->getTransformationMatrix()).linear().inverse().transpose();
     glUniformMatrix3fv(mBlinn.getUniformLocation("normal_matrix"),1,false,normal_matrix.data());
-     mesh->draw(&mBlinn,false);
+  // mesh->draw(&mBlinn,false);
 
-    /*if(drawSphere)
+
+
+    if(drawSphere)
         bpa->draw(&mBlinn);
     else
-        pc->draw(&mBlinn);*/
+        pc->draw(&mBlinn);
 
     //Draw Octree
     if(octreeVisu >= 0)

@@ -2,6 +2,12 @@
 
 using namespace Eigen;
 
+double distance2(Vector3f p1, Vector3f p2){
+    return(sqrt((p1[0]-p2[0])*(p1[0]-p2[0])+
+            (p1[1]-p2[1])*(p1[1]-p2[1])+
+            (p1[2]-p2[2])*(p1[2]-p2[2])));
+}
+
 Octree::Octree(const PointCloud * const pc, int maxDepth, int cellSize)
     : mMaxDepth(maxDepth), mCellSize(cellSize)
 {
@@ -113,22 +119,27 @@ void Octree::decimateOneDepth()
 
 }
 
-void Octree::getNeighbour(Vector3f p,int &idx0,int &idx1){
+int Octree::getNeighbour(Vector3f p,int r, int &idx0,int &idx1){
     Node* actualNode = mNodes[0];
-    while(!actualNode->isLeaf && ((actualNode->idx1 - actualNode->idx0) > 10)){
+    bool findP = true;
+    while(findP && !actualNode->isLeaf && ((actualNode->idx1 - actualNode->idx0) > 10)){
+        findP = false;
         for(int i =0; i <8 ; i++)
             if( actualNode->childs[i] != -1){
                 Node* child = mNodes[actualNode->childs[i]];
                 if(child->mAABB.contains(p)){
-                    if(child->isLeaf){
+                    if(child->isLeaf || distance2(child->mAABB.max(),p)<r ||  distance2(child->mAABB.min(),p)<r){
                         idx0 = actualNode->idx0;
                         idx1 = actualNode->idx1;
+                        return 1;
                     }
+                    findP = true;
                     actualNode = child;
                     i = 8;
                 }
             }
     }
+    return -1;
 
 }
 
