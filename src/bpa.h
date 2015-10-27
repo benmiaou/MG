@@ -27,13 +27,13 @@ private:
       Eigen::Vector3f vertex3;
     };
     struct Edge{
-      Edge(Eigen::Vector3f point1, Eigen::Vector3f point2, Eigen::Vector3f center){
-          p1 = point1;
-          p2 = point2;
+      Edge(int idp1,int idp2, Eigen::Vector3f center){
+          id1 = idp1;
+          id2 = idp2;
           sphereCenter = center;
       }
-      Eigen::Vector3f p1;
-      Eigen::Vector3f p2;
+      int id1;
+      int id2;
       Eigen::Vector3f sphereCenter;
     };
     std::vector<Edge> edges;
@@ -44,6 +44,9 @@ private:
     void moveSphere(double theta, Eigen::Vector3f axis);
     void findNewTriangle(double theta, Eigen::Vector3f axis);
     Eigen::Vector3f findPoint(std::vector<Eigen::Vector3f> tab);
+    int getSeed(Octree *octree, std::vector<bool> &isVisited,  std::vector<Eigen::Vector3f> &positions, std::vector<int> &ids, double &r);
+
+
 public:
     void init(Shader *shader);
     void draw(Shader *shader, bool drawEdges = false);
@@ -55,10 +58,13 @@ public:
 
     void specifyVertexData(Shader *shader);
     GLuint mVao;
-    GLuint mBufs[2];
+    GLuint mBufs[3];
 
-    std::vector<int>        mIndices;   /** vertex indices */
-    std::vector<Eigen::Vector3f>	mVertices;  /** 3D positions */
+    std::vector<Eigen::Vector3i> mIndices;
+    std::vector<Eigen::Vector3f>	mVertices;
+    std::vector<Eigen::Vector3f> mNormals;
+    GLuint mIndicesBuffer;
+
 };
 
 #endif // BPA_H

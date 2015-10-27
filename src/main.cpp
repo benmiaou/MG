@@ -112,7 +112,7 @@ void render(GLFWwindow* window)
 
 
     if(drawSphere)
-        bpa->draw(&mBlinn);
+        bpa->draw(&mBlinn,false);
     else
         pc->draw(&mBlinn);
 

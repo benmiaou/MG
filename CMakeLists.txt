@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 2.8)
 if (NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
-set(CMAKE_C_FLAGS "-std=c++11 -Wall -Wextra ")
+set(CMAKE_C_FLAGS "-std=c++11 -Wall -Wextra -o2")
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 

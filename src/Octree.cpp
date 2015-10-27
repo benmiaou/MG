@@ -128,7 +128,7 @@ int Octree::getNeighbour(Vector3f p,int r, int &idx0,int &idx1){
             if( actualNode->childs[i] != -1){
                 Node* child = mNodes[actualNode->childs[i]];
                 if(child->mAABB.contains(p)){
-                    if(child->isLeaf || distance2(child->mAABB.max(),p)<r ||  distance2(child->mAABB.min(),p)<r){
+                    if(child->isLeaf || distance2(child->mAABB.max(),p)<= r ||  distance2(child->mAABB.min(),p)<= r){
                         idx0 = actualNode->idx0;
                         idx1 = actualNode->idx1;
                         return 1;
