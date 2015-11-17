@@ -71,7 +71,8 @@ void initGL()
     pc->init(&mBlinn);
 
     mesh = new Mesh();
-    mesh->load(PGHP_DIR"/data/PhantomUgly.obj");
+    mesh->load(PGHP_DIR"/data/PhantomLite.obj");
+    mesh->makeUnitary();
     mesh->init(&mBlinn);
 
     //Octree
@@ -107,15 +108,15 @@ void render(GLFWwindow* window)
     glUniformMatrix4fv(mBlinn.getUniformLocation("object_matrix"),1,false,mesh->getTransformationMatrix().data());
     Matrix3f normal_matrix = (mCamera.computeViewMatrix()*mesh->getTransformationMatrix()).linear().inverse().transpose();
     glUniformMatrix3fv(mBlinn.getUniformLocation("normal_matrix"),1,false,normal_matrix.data());
-  // mesh->draw(&mBlinn,false);
+    mesh->draw(&mBlinn,false);
 
-
+/*
 
     if(drawSphere)
         bpa->draw(&mBlinn,false);
     else
         pc->draw(&mBlinn);
-
+*/
     //Draw Octree
     if(octreeVisu >= 0)
     {

@@ -2,10 +2,10 @@
 #define MESH_H
 
 #include "Shape.h"
-
+#include "Pointcloud.h"
 #include <surface_mesh/surface_mesh.h>
 
-class Mesh : public Shape
+class Mesh : public PointCloud //modif Shape
 {
 public:
     Mesh() {}
@@ -17,12 +17,14 @@ public:
 private:
     void find();
     GLuint mVao;
-    GLuint mBufs[3];
+    //GLuint mBufs[4];
+    //GLuint mBufs[3];
 
-    std::vector<Eigen::Vector3f> mPositions;
-    std::vector<Eigen::Vector3f> mNormals;
+    //std::vector<Eigen::Vector3f> mPositions;
+    //std::vector<Eigen::Vector3f> mNormals;
+    //std::vector<Eigen::Vector3f> mColors;
 
-    void specifyVertexData(Shader *shader);
+    //void specifyVertexData(Shader *shader);
     std::vector<Eigen::Vector3i> mIndices;
     std::vector<unsigned int> mValence;
 

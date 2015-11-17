@@ -13,6 +13,10 @@ public:
     PointCloud(std::vector<Eigen::Vector3f> positions,
                std::vector<Eigen::Vector3f> normals)
         : mPositions(positions), mNormals(normals){}
+    PointCloud(std::vector<Eigen::Vector3f> positions,
+               std::vector<Eigen::Vector3f> normals,
+               std::vector<Eigen::Vector3f> colors)
+        : mPositions(positions), mNormals(normals), mColors(colors){}
 
     ~PointCloud();
     void load(const std::string& filename);
@@ -23,6 +27,8 @@ public:
 
     const std::vector<Eigen::Vector3f>& getPositions() const;
     const std::vector<Eigen::Vector3f>& getNormals() const;
+    const std::vector<Eigen::Vector3f>& getColors() const;
+    void setColors(const std::vector<Eigen::Vector3f>& c);
 
     int numPoints() const {return mPositions.size();}
 
@@ -31,9 +37,10 @@ protected:
 
     std::vector<Eigen::Vector3f> mPositions;
     std::vector<Eigen::Vector3f> mNormals;
+    std::vector<Eigen::Vector3f> mColors;
 
     GLuint mVao;
-    GLuint mBufs[2];//Positions,Normals
+    GLuint mBufs[3];//Positions,Normals, Colors
 };
 
 #endif // POINTCLOUD_H

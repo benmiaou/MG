@@ -6,7 +6,8 @@ uniform vec4 light_pos;
 
 in vec3 vertexV;
 in vec3 normalV;
-uniform vec3 colorV = vec3(0.2,0.3,0.8);
+in vec3 colorV;
+uniform vec3 color = vec3(0.2,0.3,0.8);
 
 out vec4 out_color;
 
@@ -27,5 +28,6 @@ void main()
 {
 	vec3 l = vec3(modelview_matrix * light_pos) - vertexV;
 	/*out_color = vec4(phong(normalize(normalV),normalize(l),-normalize(vertexV),colorV.rgb,vec3(1.0),50,vec3(1./max(1,dot(l,l)))),1);*/
-	out_color = vec4(normalize(normalV),1);
+        //out_color = vec4(normalize(normalV),1);
+        out_color = vec4(colorV,1);
 }

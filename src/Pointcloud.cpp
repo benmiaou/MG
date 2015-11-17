@@ -31,12 +31,22 @@ void PointCloud::load(const std::string& filename)
     }
 
     infile.close();
+
+    std::vector<Vector3f> c;
+    for (int i=0; i<mPositions.size(); i++){
+        if (i%2)
+            c.push_back(Vector3f(1,1,1));
+        else
+            c.push_back(Vector3f(0,0,0));
+    }
+    setColors(c);
+    //setColors(std::vector<Vector3f>(mPositions.size(), Vector3f(0,1,0)));
 }
 
 void PointCloud::init(Shader *shader)
 {
     glGenVertexArrays(1, &mVao);
-    glGenBuffers(2, mBufs);
+    glGenBuffers(3, mBufs);
 
     glBindVertexArray(mVao);
 
@@ -46,7 +56,10 @@ void PointCloud::init(Shader *shader)
     glBindBuffer(GL_ARRAY_BUFFER, mBufs[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3f)*mNormals.size(), mNormals.data(), GL_STATIC_DRAW);
 
-    specifyVertexData(shader);
+    glBindBuffer(GL_ARRAY_BUFFER, mBufs[2]);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3f)*mColors.size(), mColors.data(), GL_STATIC_DRAW);
+    GL_TEST_ERR;
+    specifyVertexData(shader);    
 
     glBindVertexArray(0);
 
@@ -66,6 +79,7 @@ void PointCloud::draw(Shader *shader, bool drawEdges)
     }
 
     glDrawArrays(GL_POINTS, 0, mPositions.size());
+
     GL_TEST_ERR;
     glBindVertexArray(0);
 }
@@ -84,6 +98,13 @@ void PointCloud::specifyVertexData(Shader *shader)
     if(normal_loc>=0){
         glEnableVertexAttribArray(normal_loc);
         glVertexAttribPointer(normal_loc, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), (void*)0);
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, mBufs[2]);
+    int color_loc = shader->getAttribLocation("vtx_color");
+    if(color_loc>=0){
+        glEnableVertexAttribArray(color_loc);
+        glVertexAttribPointer(color_loc, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), (void*)0);
     }
 }
 
@@ -124,4 +145,14 @@ const std::vector<Eigen::Vector3f>& PointCloud::getPositions() const
 const std::vector<Eigen::Vector3f>& PointCloud::getNormals() const
 {
     return mNormals;
+}
+
+const std::vector<Eigen::Vector3f>& PointCloud::getColors() const
+{
+    return mColors;
+}
+
+void PointCloud::setColors(const std::vector<Vector3f> &c)
+{
+   mColors = c;
 }
