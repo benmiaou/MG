@@ -4,6 +4,7 @@
 #include "Shape.h"
 #include "Pointcloud.h"
 #include <surface_mesh/surface_mesh.h>
+using namespace surface_mesh;
 
 class Mesh : public PointCloud //modif Shape
 {
@@ -15,6 +16,14 @@ public:
     void draw(Shader *shader, bool drawEdges = false);
 
 private:
+    struct Hole{
+      Hole(std::vector<Surface_mesh::Edge> edges){
+          //bonding box, nb vertex, convex.
+
+      }
+    std::vector<Surface_mesh::Edge> edges;
+    };
+
     void find();
     GLuint mVao;
     //GLuint mBufs[4];
