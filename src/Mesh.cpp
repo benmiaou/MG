@@ -60,15 +60,15 @@ void Mesh::load(const string& filename)
         mean += val;
     }
     mColorVal.resize(mColors.size(),Vector3f(0,0,0));
-        mColorHoles.resize(mColors.size(),Vector3f(0,0,0));
+    mColorHoles.resize(mColors.size(),Vector3f(0,0,0));
 
-        for(int i =0; i< mValence.size(); i++){
-            float val = mValence[i];
-            float color = val/max;
-            if(val == 0)
-                mColorVal[i] = Vector3f(1,1,1);
-            mColorVal[i] = Vector3f(color,color,color);
-        }
+    for(int i =0; i< mValence.size(); i++){
+        float val = mValence[i];
+        float color = val/max;
+        if(val == 0)
+            mColorVal[i] = Vector3f(1,1,1);
+        mColorVal[i] = Vector3f(color,color,color);
+    }
     mean = mean/mValence.size();
     cout << "Valence: Max : " << max  << " Min : " << min << " Mean : " << mean <<endl;
 
@@ -89,29 +89,29 @@ void Mesh::load(const string& filename)
         v2 = *fvit;
 
         //do{
-            v1 = v2;
-            ++fvit;
-            v2 = *fvit;
-            mIndices.push_back(Vector3i(v0.idx(), v1.idx(), v2.idx()));
+        v1 = v2;
+        ++fvit;
+        v2 = *fvit;
+        mIndices.push_back(Vector3i(v0.idx(), v1.idx(), v2.idx()));
 
         //} while (++fvit != fvend);
-            Surface_mesh::Edge e1 = mHalfEdge.find_edge(v0,v1);
-            Surface_mesh::Edge e2 = mHalfEdge.find_edge(v0,v2);
-            Surface_mesh::Edge e3 = mHalfEdge.find_edge(v1,v2);
-            float le1 = mHalfEdge.edge_length(e1);
-            float le2 = mHalfEdge.edge_length(e2);
-            float le3 = mHalfEdge.edge_length(e3);
+        Surface_mesh::Edge e1 = mHalfEdge.find_edge(v0,v1);
+        Surface_mesh::Edge e2 = mHalfEdge.find_edge(v0,v2);
+        Surface_mesh::Edge e3 = mHalfEdge.find_edge(v1,v2);
+        float le1 = mHalfEdge.edge_length(e1);
+        float le2 = mHalfEdge.edge_length(e2);
+        float le3 = mHalfEdge.edge_length(e3);
 
-            float ratio = abs(le1/le2 - le1/le3);
+        float ratio = abs(le1/le2 - le1/le3);
 
 
     }
     for (int i=0; i<mPositions.size(); i++){
-           if (i%2)
-               mColorFaces.push_back(Vector3f(1,1,1));
-           else
-               mColorFaces.push_back(Vector3f(0,0,0));
-       }
+        if (i%2)
+            mColorFaces.push_back(Vector3f(1,1,1));
+        else
+            mColorFaces.push_back(Vector3f(0,0,0));
+    }
     find();
 }
 
@@ -124,45 +124,70 @@ void Mesh::find(){
     for(hit = mHalfEdge.halfedges_begin();hit != hend; ++hit){
         Surface_mesh::Halfedge current = *hit;
         Surface_mesh::Face f = mHalfEdge.face(*hit);
-        if(!f.is_valid() /*&& !alreadyDo[current.idx()]*/){
-
-            cpt = 0;
-            Surface_mesh::Vertex v = mHalfEdge.vertex(mHalfEdge.edge(*hit),0);
+        if(!f.is_valid() && !alreadyDo[current.idx()]){
+            Hole *h = new Hole();
+            h->edges.push_back(current);
 
             Surface_mesh::Halfedge next = mHalfEdge.next_halfedge(*hit);
             f = mHalfEdge.face(next);
-            while(!f.is_valid() && next != *hit){
+            while(!f.is_valid() && next != *hit && !alreadyDo[next.idx()]){
+                alreadyDo[next.idx()] = true;
+                h->edges.push_back(next);
                 next = mHalfEdge.next_halfedge(next);
                 f = mHalfEdge.face(next);
-                cpt++;
-                 alreadyDo[next.idx()] = true;
             }
 
-            int cptt = cpt;
-            cpt =0;
+
             Surface_mesh::Halfedge prev = mHalfEdge.prev_halfedge(*hit);
             f = mHalfEdge.face(prev);
-            while(!f.is_valid() && next != *hit){
+            while(!f.is_valid() && prev != *hit && !alreadyDo[prev.idx()] ){
+                alreadyDo[prev.idx()] = true;
+                h->edges.push_back(prev);
                 prev = mHalfEdge.prev_halfedge(next);
                 f = mHalfEdge.face(prev);
-                cpt++;
-                 alreadyDo[prev.idx()] = true;
             }
+            bool convex = true;
 
-            if (cptt > cpt)
-                    cpt = cptt;
-            if(cpt > 3)
-                mColorHoles[v.idx()] += Vector3f(1,0,0);
-            if(cpt < 3)
-                mColorHoles[v.idx()] += Vector3f(0,0,1);
-            if(cpt == 3)
-                mColorHoles[v.idx()] += Vector3f(0,1,0);
-            nbHoles += 1.0/cpt;
+            for(int i = 0; i < h->edges.size(); i++){
+                int holeSize = h->edges.size();
+                bool sign = true;
+                Surface_mesh::Vertex v1 = mHalfEdge.vertex(mHalfEdge.edge(h->edges[i]),0);
+                Surface_mesh::Vertex v2 = mHalfEdge.vertex(mHalfEdge.edge(h->edges[i]),1);
+                //convex ?
+                if (i < h->edges.size()-1){
+                    Surface_mesh::Vertex_property<Point> vertices = mHalfEdge.get_vertex_property<Point>("v:point");
+
+                    Surface_mesh::Vertex v3 = mHalfEdge.vertex(mHalfEdge.edge(h->edges[i+1]),0);
+
+                    Vector3f vector1 = Vector3f(vertices[v1][0]-vertices[v2][0], vertices[v1][1]-vertices[v2][1], vertices[v1][2]-vertices[v2][2]);
+                    Vector3f vector2 = Vector3f(vertices[v1][0]-vertices[v3][0], vertices[v1][1]-vertices[v3][1], vertices[v1][2]-vertices[v3][2]);
+
+                    if( i == 0)
+                        sign = vector1.cross(vector2).norm() > 0;
+                    else
+                        if(sign != vector1.cross(vector2).norm() > 0)
+                            convex = false;
+                }
+
+                //color holes
+                if(holeSize > 3){
+                    mColorHoles[v1.idx()] += Vector3f(1,0,0);
+                    mColorHoles[v2.idx()] += Vector3f(1,0,0);
+                }
+                if(holeSize < 3){
+                    mColorHoles[v1.idx()] += Vector3f(0,0,1);
+                    mColorHoles[v2.idx()] += Vector3f(0,0,1);
+                }
+                if(holeSize == 3){
+                    mColorHoles[v1.idx()] += Vector3f(0,1,0);
+                    mColorHoles[v2.idx()] += Vector3f(0,1,0);
+                }
+            }
+            h->convex = convex;
+            nbHoles += 1.0;
         }
-
-
     }
-      cout << "nbHoles : " << (int)nbHoles <<endl;
+    cout << "nbHoles : " << (int)nbHoles <<endl;
 }
 
 

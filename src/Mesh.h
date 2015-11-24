@@ -21,11 +21,12 @@ public:
 
 private:
     struct Hole{
-      Hole(std::vector<Surface_mesh::Edge> edges){
-          //bonding box, nb vertex, convex.
-
+      Hole(){
       }
-    std::vector<Surface_mesh::Edge> edges;
+    std::vector<Surface_mesh::Halfedge> edges;
+    Eigen::Vector3f max;
+    Eigen::Vector3f min;
+    bool convex;
     };
 
     void find();
