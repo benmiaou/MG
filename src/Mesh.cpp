@@ -59,15 +59,16 @@ void Mesh::load(const string& filename)
             min = val;
         mean += val;
     }
-    /*
-    for(int i =0; i< mValence.size(); i++){
-        float val = mValence[i];
-        float color = val/max;
-        if(val == 0)
-             mColors[i] = Vector3f(1,1,1);
-        mColors[i] = Vector3f(0,0,color);
-    }
-    */
+    mColorVal.resize(mColors.size(),Vector3f(0,0,0));
+        mColorHoles.resize(mColors.size(),Vector3f(0,0,0));
+
+        for(int i =0; i< mValence.size(); i++){
+            float val = mValence[i];
+            float color = val/max;
+            if(val == 0)
+                mColorVal[i] = Vector3f(1,1,1);
+            mColorVal[i] = Vector3f(color,color,color);
+        }
     mean = mean/mValence.size();
     cout << "Valence: Max : " << max  << " Min : " << min << " Mean : " << mean <<endl;
 
@@ -105,6 +106,12 @@ void Mesh::load(const string& filename)
 
 
     }
+    for (int i=0; i<mPositions.size(); i++){
+           if (i%2)
+               mColorFaces.push_back(Vector3f(1,1,1));
+           else
+               mColorFaces.push_back(Vector3f(0,0,0));
+       }
     find();
 }
 
@@ -145,11 +152,11 @@ void Mesh::find(){
             if (cptt > cpt)
                     cpt = cptt;
             if(cpt > 3)
-                mColors[v.idx()] += Vector3f(1,0,0);
+                mColorHoles[v.idx()] += Vector3f(1,0,0);
             if(cpt < 3)
-                mColors[v.idx()] += Vector3f(0,0,1);
+                mColorHoles[v.idx()] += Vector3f(0,0,1);
             if(cpt == 3)
-                mColors[v.idx()] += Vector3f(0,1,0);
+                mColorHoles[v.idx()] += Vector3f(0,1,0);
             nbHoles += 1.0/cpt;
         }
 

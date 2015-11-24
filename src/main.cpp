@@ -48,6 +48,7 @@ BPA *bpa;
 Mesh *mesh;
 
 bool drawSphere = false;
+bool wireFrame = true;
 int octreeVisu = 0;
 
 /** This method needs to be called once the GL context has been created by GLFW.
@@ -108,7 +109,7 @@ void render(GLFWwindow* window)
     glUniformMatrix4fv(mBlinn.getUniformLocation("object_matrix"),1,false,mesh->getTransformationMatrix().data());
     Matrix3f normal_matrix = (mCamera.computeViewMatrix()*mesh->getTransformationMatrix()).linear().inverse().transpose();
     glUniformMatrix3fv(mBlinn.getUniformLocation("normal_matrix"),1,false,normal_matrix.data());
-    mesh->draw(&mBlinn,true);
+    mesh->draw(&mBlinn,wireFrame);
 
 
 
@@ -238,7 +239,27 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
             std::cout << "ending number of points " << pc->numPoints() << std::endl;
         }
+        else if(key == GLFW_KEY_H){
+                    mesh->setColors(mesh->mColorHoles);
+                    mesh->init(&mBlinn);
 
+                }
+
+        else if(key == GLFW_KEY_V){
+                    mesh->setColors(mesh->mColorVal);
+                    mesh->init(&mBlinn);
+
+                }
+
+         else if(key == GLFW_KEY_C){
+                    mesh->setColors(mesh->mColorFaces);
+                    mesh->init(&mBlinn);
+
+                }
+        else if(key == GLFW_KEY_W){
+                   wireFrame = !wireFrame;
+                   mesh->init(&mBlinn);
+               }
 
     }
 }

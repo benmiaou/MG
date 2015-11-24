@@ -15,6 +15,10 @@ public:
     void init(Shader *shader);
     void draw(Shader *shader, bool drawEdges = false);
 
+    std::vector<Eigen::Vector3f> mColorFaces;
+        std::vector<Eigen::Vector3f> mColorVal;
+        std::vector<Eigen::Vector3f> mColorHoles;
+
 private:
     struct Hole{
       Hole(std::vector<Surface_mesh::Edge> edges){
@@ -26,14 +30,6 @@ private:
 
     void find();
     GLuint mVao;
-    //GLuint mBufs[4];
-    //GLuint mBufs[3];
-
-    //std::vector<Eigen::Vector3f> mPositions;
-    //std::vector<Eigen::Vector3f> mNormals;
-    //std::vector<Eigen::Vector3f> mColors;
-
-    //void specifyVertexData(Shader *shader);
     std::vector<Eigen::Vector3i> mIndices;
     std::vector<unsigned int> mValence;
 
