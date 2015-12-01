@@ -112,10 +112,13 @@ void Mesh::load(const string& filename)
         else
             mColorFaces.push_back(Vector3f(0,0,0));
     }
-    find();
+
 }
 
 void Mesh::find(){
+    mColorHoles.clear();
+    mColorHoles.resize(mPositions.size(),Vector3f(0,0,0));
+    Surface_mesh::Vertex_property<Point> vertices = mHalfEdge.get_vertex_property<Point>("v:point");
     float nbHoles = 0;
     Surface_mesh::Halfedge_iterator hit,hend = mHalfEdge.halfedges_end();
     vector<bool> alreadyDo;
@@ -147,20 +150,27 @@ void Mesh::find(){
                 f = mHalfEdge.face(prev);
             }
             bool convex = true;
+            Vector3f geocenter = Vector3f(0,0,0);
 
+
+            Surface_mesh::Vertex v1 = mHalfEdge.vertex(mHalfEdge.edge(h->edges[0]),0);
+            for(int k =0; k < 3; k++){
+                h->max[k] =  mPositions[v1.idx()][k];
+                h->min[k] =  mPositions[v1.idx()][k];
+            }
             for(int i = 0; i < h->edges.size(); i++){
                 int holeSize = h->edges.size();
                 bool sign = true;
                 Surface_mesh::Vertex v1 = mHalfEdge.vertex(mHalfEdge.edge(h->edges[i]),0);
                 Surface_mesh::Vertex v2 = mHalfEdge.vertex(mHalfEdge.edge(h->edges[i]),1);
+                geocenter += mPositions[v1.idx()];
                 //convex ?
                 if (i < h->edges.size()-1){
-                    Surface_mesh::Vertex_property<Point> vertices = mHalfEdge.get_vertex_property<Point>("v:point");
+
 
                     Surface_mesh::Vertex v3 = mHalfEdge.vertex(mHalfEdge.edge(h->edges[i+1]),0);
-
-                    Vector3f vector1 = Vector3f(vertices[v1][0]-vertices[v2][0], vertices[v1][1]-vertices[v2][1], vertices[v1][2]-vertices[v2][2]);
-                    Vector3f vector2 = Vector3f(vertices[v1][0]-vertices[v3][0], vertices[v1][1]-vertices[v3][1], vertices[v1][2]-vertices[v3][2]);
+                    Vector3f vector1 = Vector3f(mPositions[v1.idx()]- mPositions[v2.idx()]);
+                    Vector3f vector2 = Vector3f(mPositions[v1.idx()]- mPositions[v3.idx()]);
 
                     if( i == 0)
                         sign = vector1.cross(vector2).norm() > 0;
@@ -168,80 +178,209 @@ void Mesh::find(){
                         if(sign != vector1.cross(vector2).norm() > 0)
                             convex = false;
                 }
-
+                //find max/min
+                for(int k =0; k < 3; k++){
+                    if(h->max[k] < mPositions[v1.idx()][k]){
+                        h->max[k] =  mPositions[v1.idx()][k];
+                    }
+                    if(h->min[k] > mPositions[v1.idx()][k]){
+                        h->min[k] =  mPositions[v1.idx()][k];
+                    }
+                }
                 //color holes
                 if(holeSize > 3){
-                    mColorHoles[v1.idx()] += Vector3f(1,0,0);
-                    mColorHoles[v2.idx()] += Vector3f(1,0,0);
+                    mColorHoles[v1.idx()] = Vector3f(1,0,0);
+                    mColorHoles[v2.idx()] = Vector3f(1,0,0);
                 }
                 if(holeSize < 3){
-                    mColorHoles[v1.idx()] += Vector3f(0,0,1);
-                    mColorHoles[v2.idx()] += Vector3f(0,0,1);
+                    mColorHoles[v1.idx()] = Vector3f(0,0,1);
+                    mColorHoles[v2.idx()] = Vector3f(0,0,1);
                 }
                 if(holeSize == 3){
-                    mColorHoles[v1.idx()] += Vector3f(0,1,0);
-                    mColorHoles[v2.idx()] += Vector3f(0,1,0);
+                    mColorHoles[v1.idx()] = Vector3f(0,1,0);
+                    mColorHoles[v2.idx()] = Vector3f(0,1,0);
                 }
             }
+            geocenter = geocenter/h->edges.size();
+            h->geocenter = geocenter;
             h->convex = convex;
+            holes.push_back(*h);
             nbHoles += 1.0;
         }
     }
     cout << "nbHoles : " << (int)nbHoles <<endl;
 }
 
-
-void Mesh::init(Shader *shader)
-{
-    //ajout
-    PointCloud::init(shader);
-
-    glGenVertexArrays(1, &mVao);
-
-
-    glBindVertexArray(mVao);
-
-
-
-    glGenBuffers(1, &mIndicesBuffer);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndicesBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Vector3i) *mIndices.size(), mIndices.data(),  GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, mBufs[0]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3f)*mPositions.size(), mPositions.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, mBufs[1]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3f)*mNormals.size(), mNormals.data(), GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ARRAY_BUFFER, mBufs[2]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3f)*mColors.size(), mColors.data(), GL_STATIC_DRAW);
-
-    specifyVertexData(shader);
-
-    glBindVertexArray(0);
-
-    mReady = true;
+std::vector<Eigen::AlignedBox3f> Mesh::getAABBs(){
+    std::vector<Eigen::AlignedBox3f> aabbs;
+    for(int k = 0; k < holes.size(); k++){
+        Hole h = holes[k];
+        AlignedBox3f aabb(h.min,h.max);
+        aabbs.push_back(aabb);
+    }
+    return aabbs;
 }
 
+bool Mesh::isPlanar(Hole h){
+    for(int k =0; k < 3; k++){
+        if(h.max[k] - h.min[k] < 0.01)
+            return true;
+    }
+    return false;
+}
 
+ std::vector<Mesh::Hole> Mesh::divideComplexHoles(std::vector<Hole> complexHoles){
+    std::vector<Hole> newHoles;
+    Hole newHole;
+    AlignedBox3f *aabb;
+    for(int k = 0; k < complexHoles.size(); k++){
+        Hole h = complexHoles[k];
+        //init
+        Vector3f geocenter = Vector3f(0,0,0);
+        Surface_mesh::Vertex v1 = mHalfEdge.vertex(mHalfEdge.edge(h.edges[0]),0);
+        Surface_mesh::Vertex v2 = mHalfEdge.vertex(mHalfEdge.edge(h.edges[0]),1);
+        //Vector3f vector1 = Vector3f(mPositions[v1.idx()]- mPositions[v2.idx()]);
+         //aabb = new AlignedBox3f(vector1-Vector3f(0.005),vector1+Vector3f(0.005));
+        for(int k =0; k < 3; k++){
+            newHole.max[k] =  mPositions[v1.idx()][k];
+            newHole.min[k] =  mPositions[v1.idx()][k];
+        }
+        aabb = new AlignedBox3f(mPositions[v1.idx()]-Vector3f(0.005),mPositions[v2.idx()]+Vector3f(0.005));
+        Surface_mesh::Halfedge hStart = h.edges[0];
+        for(int i = 0; i < h.edges.size(); i++){
+             Surface_mesh::Vertex v1 = mHalfEdge.vertex(mHalfEdge.edge(h.edges[i]),0);
+             Surface_mesh::Vertex v2 = mHalfEdge.vertex(mHalfEdge.edge(h.edges[i]),1);
+             geocenter += mPositions[v1.idx()];
 
+             //max
+             for(int k =0; k < 3; k++){
+                 if(newHole.max[k] < mPositions[v1.idx()][k]){
+                     newHole.max[k] =  mPositions[v1.idx()][k];
+                 }
+                 if(newHole.min[k] > mPositions[v1.idx()][k]){
+                     newHole.min[k] =  mPositions[v1.idx()][k];
+                 }
+             }
 
-void Mesh::draw(Shader *shader, bool drawEdges) 
-{
-    if (!mReady) {
-        cerr<<"Warning: Mesh not ready for rendering" << endl;
-        return;
+             if(!aabb->contains(mPositions[v2.idx()])){
+                // Vector3f vector1 = Vector3f(mPositions[v1.idx()]- mPositions[v2.idx()]);
+                 //aabb = new AlignedBox3f(vector1-Vector3f(0.005),vector1+Vector3f(0.005));
+
+                 Surface_mesh::Halfedge newHalfEdge;
+                 mHalfEdge.set_vertex(newHalfEdge,v1);
+                 mHalfEdge.set_next_halfedge(newHalfEdge,hStart);
+                 mHalfEdge.set_next_halfedge(h.edges[i],newHalfEdge);
+
+                 geocenter = geocenter/newHole.edges.size();
+                 newHole.geocenter = geocenter;
+                 geocenter = Vector3f(0,0,0);
+                 newHole.edges.push_back(newHalfEdge);
+                 newHoles.push_back(newHole);
+                 hStart = h.edges[i];
+                 newHole = Hole();
+                 for(int k =0; k < 3; k++){
+                     h.max[k] =  mPositions[v2.idx()][k];
+                     h.min[k] =  mPositions[v2.idx()][k];
+                 }
+                 aabb = new AlignedBox3f(mPositions[v1.idx()]-Vector3f(0.005),mPositions[v2.idx()]+Vector3f(0.005));
+             }
+                newHole.edges.push_back(h.edges[i]);
+         }
     }
 
-    glBindVertexArray(mVao);
+    return newHoles;
 
-    if(mShader->id() != shader->id()){
+
+
+}
+
+void Mesh::fillAllHoles(){
+    std::cout << "vertices: " << mHalfEdge.n_vertices() << std::endl;
+    std::cout << "edges: "    << mHalfEdge.n_edges()    << std::endl;
+    std::cout << "faces: "    << mHalfEdge.n_faces()    << std::endl;
+    std::vector<Hole> complexHoles;
+    for(int k = 0; k < holes.size(); k++){
+        Hole h = holes[k];
+        if(isPlanar(h))
+            fillHolesNaive(h);
+        else
+            complexHoles.push_back(h);
+    }
+    holes.clear();
+    if(!complexHoles.empty()){
+       complexHoles = divideComplexHoles(complexHoles);
+
+       holes = complexHoles;
+        std::cout << "vertices: " << mHalfEdge.n_vertices() << std::endl;
+        std::cout << "edges: "    << mHalfEdge.n_edges()    << std::endl;
+        std::cout << "faces: "    << mHalfEdge.n_faces()    << std::endl;
+    }
+
+}
+
+    void Mesh::fillHolesNaive(Hole h){
+        int id = mPositions.size();
+        mPositions.push_back(h.geocenter);
+        Surface_mesh::Vertex v3 = mHalfEdge.add_vertex(Point(h.geocenter[0],h.geocenter[1],h.geocenter[2]));
+        for(int i = 0; i < h.edges.size(); i++){
+            Surface_mesh::Vertex v1 = mHalfEdge.vertex(mHalfEdge.edge(h.edges[i]),0);
+            Surface_mesh::Vertex v2 = mHalfEdge.vertex(mHalfEdge.edge(h.edges[i]),1);
+            mHalfEdge.add_triangle(v1,v2,v3);
+            mIndices.push_back(Vector3i(v1.idx(),v2.idx(),id));
+        }
+    }
+
+    void Mesh::init(Shader *shader)
+    {
+        //ajout
+        PointCloud::init(shader);
+
+        glGenVertexArrays(1, &mVao);
+
+
+        glBindVertexArray(mVao);
+
+
+
+        glGenBuffers(1, &mIndicesBuffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mIndicesBuffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Vector3i) *mIndices.size(), mIndices.data(),  GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mBufs[0]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3f)*mPositions.size(), mPositions.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mBufs[1]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3f)*mNormals.size(), mNormals.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, mBufs[2]);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(Vector3f)*mColors.size(), mColors.data(), GL_STATIC_DRAW);
+
         specifyVertexData(shader);
+
+        glBindVertexArray(0);
+
+        mReady = true;
     }
 
-    glDrawElements(drawEdges ? GL_LINE_LOOP : GL_TRIANGLES, mIndices.size()*sizeof(Vector3i),  GL_UNSIGNED_INT, 0);
 
-    glBindVertexArray(0);
-}
+
+
+    void Mesh::draw(Shader *shader, bool drawEdges)
+    {
+        if (!mReady) {
+            cerr<<"Warning: Mesh not ready for rendering" << endl;
+            return;
+        }
+
+        glBindVertexArray(mVao);
+
+        if(mShader->id() != shader->id()){
+            specifyVertexData(shader);
+        }
+
+        glDrawElements(drawEdges ? GL_LINE_LOOP : GL_TRIANGLES, mIndices.size()*sizeof(Vector3i),  GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+    }
 
 

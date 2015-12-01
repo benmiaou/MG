@@ -48,7 +48,8 @@ BPA *bpa;
 Mesh *mesh;
 
 bool drawSphere = false;
-bool wireFrame = true;
+bool holesVisu = false;
+bool wireFrame = false;
 int octreeVisu = 0;
 
 /** This method needs to be called once the GL context has been created by GLFW.
@@ -72,12 +73,14 @@ void initGL()
     pc->init(&mBlinn);
 
     mesh = new Mesh();
-    mesh->load(PGHP_DIR"/data/PhantomUgly.obj");
+    mesh->load(PGHP_DIR"/data/PhantomLite.obj");
+   // mesh->load(PGHP_DIR"/data/bun_zipper_res4.obj");
+   // mesh->load(PGHP_DIR"/data/bun_zipper_res4.obj");
     mesh->makeUnitary();
     mesh->init(&mBlinn);
 
     //Octree
-    octree = new Octree(pc,15,100);
+    octree = new Octree(pc,10,30);
     wirecube = new WireCube();
     wirecube->init(&mSimple);
 
@@ -109,15 +112,31 @@ void render(GLFWwindow* window)
     glUniformMatrix4fv(mBlinn.getUniformLocation("object_matrix"),1,false,mesh->getTransformationMatrix().data());
     Matrix3f normal_matrix = (mCamera.computeViewMatrix()*mesh->getTransformationMatrix()).linear().inverse().transpose();
     glUniformMatrix3fv(mBlinn.getUniformLocation("normal_matrix"),1,false,normal_matrix.data());
-    mesh->draw(&mBlinn,wireFrame);
+   mesh->draw(&mBlinn,wireFrame);
 
 
 
-
-   /* if(drawSphere)
+/*
+    if(drawSphere)
         bpa->draw(&mBlinn,false);
     else
         pc->draw(&mBlinn);*/
+
+   if(holesVisu)
+   {
+       mSimple.activate();
+       glUniformMatrix4fv(mSimple.getUniformLocation("projection_matrix"),1,false,mCamera.computeProjectionMatrix().data());
+       glUniformMatrix4fv(mSimple.getUniformLocation("modelview_matrix"),1,false,mCamera.computeViewMatrix().data());
+       std::vector<AlignedBox3f> aabbs = mesh->getAABBs();
+       for(unsigned i=0; i<aabbs.size(); ++i)
+       {
+           Affine3f object_matrix;
+           object_matrix = Translation3f(aabbs[i].center()) * Scaling((aabbs[i].max() - aabbs[i].min())/2.0);
+           glUniformMatrix4fv(mSimple.getUniformLocation("object_matrix"),1,false, object_matrix.data());
+           wirecube->draw(&mSimple);
+       }
+   }
+
 
     //Draw Octree
     if(octreeVisu >= 0)
@@ -241,6 +260,8 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
             std::cout << "ending number of points " << pc->numPoints() << std::endl;
         }
         else if(key == GLFW_KEY_H){
+                mesh->find();
+                holesVisu = true;
                     mesh->setColors(mesh->mColorHoles);
                     mesh->init(&mBlinn);
 
@@ -261,6 +282,11 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
                    wireFrame = !wireFrame;
                    mesh->init(&mBlinn);
                }
+        else if(key == GLFW_KEY_T){
+                   mesh->fillAllHoles();
+                    mesh->setColors(mesh->mColorHoles);
+                    mesh->init(&mBlinn);
+                       }
 
     }
 }
