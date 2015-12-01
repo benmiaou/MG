@@ -202,6 +202,23 @@ BPA::BPA(PointCloud *model, Octree *octree)
         }
     }
 }
+void BPA::save(){
+    cout << "saving ..." << endl;
+    ofstream file(PGHP_DIR"/data/PhantomBpa.obj", ios::out);
+    //file.open(PGHP_DIR"/data/PhantomBpa.obj");
+    if (file){
+        for (int i=0; i<mVertices.size(); i++){
+            file << "v " << mVertices[i][0] << " " << mVertices[i][1] << " " << mVertices[i][2] << "\n";
+        }
+        for (int i=0; i<mIndices.size(); i++){
+            file << "f " << mIndices[i][0] << " " << mIndices[i][1] << " " << mIndices[i][2] << "\n";
+        }
+        file.close();
+        cout << "end saving" << endl;
+    }
+    else
+        cerr << "Erreur ouverture" << endl;
+}
 
 void BPA::init(Shader *shader)
 {

@@ -38,6 +38,7 @@ private:
 public:
     void init(Shader *shader);
     void draw(Shader *shader, bool drawEdges = false);
+     void save();
 
     BPA(PointCloud *model, Octree *octree);
     double getRadius();
