@@ -10,6 +10,10 @@ using namespace std;
 using namespace Eigen;
 using namespace surface_mesh;
 
+
+
+float EPSI = 0.09;
+
 Mesh::~Mesh()
 {
     if(mReady){
@@ -223,13 +227,13 @@ std::vector<Eigen::AlignedBox3f> Mesh::getAABBs(){
 
 bool Mesh::isPlanar(Hole h){
     for(int k =0; k < 3; k++){
-        if(h.max[k] - h.min[k] < 0.01)
+        if(h.max[k] - h.min[k] < EPSI)
             return true;
     }
     return false;
 }
 
-std::vector<Mesh::Hole> Mesh::divideComplexHoles(std::vector<Hole> complexHoles){
+void Mesh::divideComplexHoles(std::vector<Hole> complexHoles){
     std::vector<Hole> newHoles;
     Hole newHole;
     for(int k = 0; k < complexHoles.size(); k++){
@@ -241,19 +245,20 @@ std::vector<Mesh::Hole> Mesh::divideComplexHoles(std::vector<Hole> complexHoles)
 
         Vector3f vectorRef = Vector3f(mPositions[v1.idx()]- mPositions[v2.idx()]);
 
-
         for(int k =0; k < 3; k++){
             newHole.max[k] =  mPositions[v1.idx()][k];
             newHole.min[k] =  mPositions[v1.idx()][k];
         }
+
+
         Surface_mesh::Halfedge hStart = h.edges[0];
         for(int i = 0; i < h.edges.size(); i++){
+            cout << "teststset : " <<endl;
             Surface_mesh::Vertex v1 = mHalfEdge.vertex(mHalfEdge.edge(h.edges[i]),0);
             Surface_mesh::Vertex v2 = mHalfEdge.vertex(mHalfEdge.edge(h.edges[i]),1);
             Vector3f vector2 = Vector3f(mPositions[v1.idx()]- mPositions[v2.idx()]);
             geocenter += mPositions[v1.idx()];
 
-            //max
             for(int k =0; k < 3; k++){
                 if(newHole.max[k] < mPositions[v1.idx()][k]){
                     newHole.max[k] =  mPositions[v1.idx()][k];
@@ -262,10 +267,9 @@ std::vector<Mesh::Hole> Mesh::divideComplexHoles(std::vector<Hole> complexHoles)
                     newHole.min[k] =  mPositions[v1.idx()][k];
                 }
             }
-            cout << "cross : " << fabs(vectorRef.cross(vector2).norm()) <<endl;
-            if( fabs(vectorRef.cross(vector2).norm()) > 0.004 ){
 
 
+             if(!isPlanar(newHole)){
                 Surface_mesh::Halfedge newHalfEdge;
                 mHalfEdge.set_vertex(newHalfEdge,v1);
                 mHalfEdge.set_next_halfedge(newHalfEdge,hStart);
@@ -283,11 +287,12 @@ std::vector<Mesh::Hole> Mesh::divideComplexHoles(std::vector<Hole> complexHoles)
                     h.min[k] =  mPositions[v2.idx()][k];
                 }
             }
+
             newHole.edges.push_back(h.edges[i]);
         }
     }
 
-    return newHoles;
+
 
 
 
@@ -307,17 +312,16 @@ void Mesh::fillAllHoles(){
     }
     holes.clear();
     if(!complexHoles.empty()){
-        complexHoles = divideComplexHoles(complexHoles);
-
-        holes = complexHoles;
+        divideComplexHoles(complexHoles);
         std::cout << "vertices: " << mHalfEdge.n_vertices() << std::endl;
         std::cout << "edges: "    << mHalfEdge.n_edges()    << std::endl;
         std::cout << "faces: "    << mHalfEdge.n_faces()    << std::endl;
     }
-
 }
 
+
 void Mesh::fillHolesNaive(Hole h){
+    std::cout << h.edges.size()  << std::endl;
     int id = mPositions.size();
     mPositions.push_back(h.geocenter);
     Surface_mesh::Vertex v3 = mHalfEdge.add_vertex(Point(h.geocenter[0],h.geocenter[1],h.geocenter[2]));

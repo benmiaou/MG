@@ -4,6 +4,8 @@
 #include "Pointcloud.h"
 #include "Octree.h"
 #include "Eigen/Geometry"
+#include <iostream>
+#include <fstream>
 
 class BPA : public Shape
 {

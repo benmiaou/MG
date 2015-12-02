@@ -73,8 +73,8 @@ void initGL()
     pc->init(&mBlinn);
 
     mesh = new Mesh();
-    //mesh->load(PGHP_DIR"/data/PhantomLite.obj");
-    mesh->load(PGHP_DIR"/data/bun_zipper_res4.obj");
+    mesh->load(PGHP_DIR"/data/PhantomLite.obj");
+   // mesh->load(PGHP_DIR"/data/bun_zipper_res4.obj");
    // mesh->load(PGHP_DIR"/data/bun_zipper_res4.obj");
     mesh->makeUnitary();
     mesh->init(&mBlinn);

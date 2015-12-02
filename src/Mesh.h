@@ -49,7 +49,7 @@ private:
 
     void fillHolesNaive(Hole h);
     bool isPlanar(Hole h);
-    std::vector<Hole> divideComplexHoles(std::vector<Hole> complexHoles);
+    void divideComplexHoles(std::vector<Hole> complexHoles);
 
 };
 
