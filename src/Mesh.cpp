@@ -12,7 +12,6 @@ using namespace surface_mesh;
 
 
 
-float EPSI = 0.09;
 
 Mesh::~Mesh()
 {
@@ -21,6 +20,8 @@ Mesh::~Mesh()
         glDeleteVertexArrays(1,&mVao);
     }
 }
+
+
 
 void Mesh::load(const string& filename)
 {

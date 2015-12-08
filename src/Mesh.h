@@ -24,7 +24,7 @@ public:
     void fillAllHoles();
      void find();
     std::vector<Eigen::AlignedBox3f> getAABBs();
-
+    float EPSI = 0.09;
 private:
 
     struct Hole{
@@ -50,6 +50,7 @@ private:
     void fillHolesNaive(Hole h);
     bool isPlanar(Hole h);
     void divideComplexHoles(std::vector<Hole> complexHoles);
+
 
 };
 

@@ -73,8 +73,8 @@ void initGL()
     pc->init(&mBlinn);
 
     mesh = new Mesh();
-    mesh->load(PGHP_DIR"/data/PhantomLite.obj");
-   // mesh->load(PGHP_DIR"/data/bun_zipper_res4.obj");
+   // mesh->load(PGHP_DIR"/data/PhantomLite.obj");
+    mesh->load(PGHP_DIR"/data/bun_zipper_res4.obj");
    // mesh->load(PGHP_DIR"/data/bun_zipper_res4.obj");
     mesh->makeUnitary();
     mesh->init(&mBlinn);
@@ -130,6 +130,12 @@ void render(GLFWwindow* window)
        std::vector<AlignedBox3f> aabbs = mesh->getAABBs();
        for(unsigned i=0; i<aabbs.size(); ++i)
        {
+
+           glUniform3f(mSimple.getUniformLocation("color"),1.f,0,0);
+           for(int k =0; k < 3; k++){
+               if(aabbs[i].max()[k] - aabbs[i].min()[k] < mesh->EPSI)
+                   glUniform3f(mSimple.getUniformLocation("color"),0,1.f,0);
+           }
            Affine3f object_matrix;
            object_matrix = Translation3f(aabbs[i].center()) * Scaling((aabbs[i].max() - aabbs[i].min())/2.0);
            glUniformMatrix4fv(mSimple.getUniformLocation("object_matrix"),1,false, object_matrix.data());
@@ -147,7 +153,7 @@ void render(GLFWwindow* window)
         std::vector<AlignedBox3f> aabbs = octree->getAABBs(octreeVisu);
         for(unsigned i=0; i<aabbs.size(); ++i)
         {
-            Affine3f object_matrix;
+           Affine3f object_matrix;
             object_matrix = Translation3f(aabbs[i].center()) * Scaling((aabbs[i].max() - aabbs[i].min())/2.0);
             glUniformMatrix4fv(mSimple.getUniformLocation("object_matrix"),1,false, object_matrix.data());
             wirecube->draw(&mSimple);
